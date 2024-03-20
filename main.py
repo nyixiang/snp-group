@@ -108,7 +108,6 @@ def calculate_ball_position(circle, real_diameter, K, RT):
     # Apply the extrinsic matrix to convert to world coordinates
     # Assuming RT is the [R|T] matrix extended to 4x4 with a row [0, 0, 0, 1]
     point_world = np.dot(RT, point_camera)
-    # point_world = np.dot(np.linalg.inv(RT), point_camera)
 
     # Since we used homogeneous coordinates, divide by the last element if not 1
     if point_world[3] != 0 and point_world[3] != 1:
@@ -121,8 +120,6 @@ def calculate_ball_position(circle, real_diameter, K, RT):
 def intrinsic_matrix():
     image_w = 640
     image_h = 480
-    # fov_w = np.deg2rad(47.8)
-    # fov_h = np.deg2rad(36.8)
     fov_w = np.deg2rad(60.9)
     fov_h = np.deg2rad(47.6)
 
@@ -137,6 +134,7 @@ def intrinsic_matrix():
         [0,       0,      1  ]
     ])
 
+    # Calibrated parameters
     # K = np.array([
     #     [670.83636187,   0.,         336.29166902],
     #     [0.,         668.11148516, 253.29365806],
@@ -145,39 +143,9 @@ def intrinsic_matrix():
     
     return K
 
-# def intrinsic_matrix():
-
-
-# From http://doc.aldebaran.com/1-14/family/robots/video_robot.html
-# def extrinsic_matrix(phi, theta):
-#     theta_x = 0.0
-#     theta_y = 0.0209
-#     theta_z = 0.0
-#     t_x = 0.05871
-#     t_y = 0.0
-#     t_z = 0.06364
-
-#     R = np.array([
-#         [np.cos(theta_y),   0,  np.sin(theta_y) ],
-#         [0,                 1,  0               ],
-#         [-np.sin(theta_y),  0,  np.cos(theta_y) ]
-#     ])
-
-#     t = np.array([[t_x], [t_y], [t_z]])
-
-#     # Constructing the full transformation matrix
-#     T = np.hstack((R, t))  # Combining rotation matrix and translation vector
-#     T = np.vstack((T, [0, 0, 0, 1]))  # Adding the bottom row for homogeneity
-
-#     return T
-
 ball_diameter = 0.055
 K = intrinsic_matrix()
 RT = extrinsic_matrix()
-RT = np.eye(4)
-
-print(RT)
-# quit()
 
 try:
     while True:
