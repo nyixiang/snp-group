@@ -4,8 +4,9 @@ import vision_definitions
 import math
 from naoqi import ALProxy
 import motion
+import utils
 
-ON_NAO = True
+ON_NAO = False
 
 if ON_NAO:
     # Initialize connection to the robot
@@ -55,6 +56,9 @@ if ON_NAO:
         return result
 
 else:
+    def extrinsic_matrix():
+        return np.eye(4)
+
     VIDEO = True
     if VIDEO:
         import time
@@ -63,24 +67,25 @@ else:
         def get_image():
             global i
 
-            time.sleep(1)
-            image = cv2.imread('./data/video/image_' + str(i % 10) + '.png')
+            time.sleep(0.5)
+            image = cv2.imread('./data/video2/image_' + str(i % 49) + '.png')
             i += 1
             return image
 
     else:
         def get_image():
-            return cv2.imread('./data/test-img.png')
+            return cv2.imread('./data/test_2.png')
 
 def detect_blue_ball(image):
     hue_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    low_range = np.array([95, 150, 100])
+    low_range = np.array([95, 100, 75])
     high_range = np.array([115, 255, 255])
     mask = cv2.inRange(hue_image, low_range, high_range)
-    gaus = cv2.GaussianBlur(mask, (7, 7), 1.5)
-    eroded = cv2.erode(gaus, None, iterations=2)
-    dilated = cv2.dilate(eroded, None, iterations=2)
-    circles = cv2.HoughCircles(dilated, cv2.HOUGH_GRADIENT, 1, 100, param1=15, param2=7, minRadius=15, maxRadius=100)
+    eroded = cv2.erode(mask, None, iterations=1)
+    dilated = cv2.dilate(eroded, None, iterations=1)
+    gaus = cv2.GaussianBlur(dilated, (7, 7), 3.5)
+    circles = cv2.HoughCircles(gaus, cv2.HOUGH_GRADIENT, 1, 100, param1=15, param2=15, minRadius=15, maxRadius=100)
+    cv2.imshow('mask', gaus)
     return circles if circles is not None else []
 
 def draw_circles(image, circle):
@@ -143,6 +148,11 @@ def intrinsic_matrix():
     
     return K
 
+def undistort(img, intrinsic_matrix,
+              dist_coeffs=np.array([[0.22678288, -0.54274653, 0.01301456, 0.01108197, 0.37626486]])):
+    return cv2.undistort(img, intrinsic_matrix, dist_coeffs, None, intrinsic_matrix)
+
+
 ball_diameter = 0.055
 K = intrinsic_matrix()
 RT = extrinsic_matrix()
@@ -150,7 +160,8 @@ RT = extrinsic_matrix()
 try:
     while True:
         frame = get_image()
-        print(frame.shape)
+        frame = undistort(frame, K)
+        # utils.save_image_to_disk('./data/video/', frame)
         circles = detect_blue_ball(frame)
         if len(circles) > 0:
             circle = circles[0][0]
